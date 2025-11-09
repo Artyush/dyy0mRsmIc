@@ -43,11 +43,11 @@ class Story extends ActiveRecord
             [['body', 'ip', 'created_at', 'manage_token'], 'required'],
             [['body', 'email'], 'trim'],
             [['body'], 'string', 'min' => 5, 'max' => 1000],
-            [['body'], function ($attr) {
-                if (preg_match('/^\s*$/u', (string)$this->$attr)) {
-                    $this->addError($attr, 'The message cannot consist only of spaces.');
-                }
-            }],
+            [['body'], 'match',
+                'pattern' => '/^(?!\s*$).+/',
+                'message' => 'The message cannot consist only of spaces.',
+                'skipOnEmpty' => false,
+            ],
             [['created_at', 'deleted_at'], 'integer'],
             [['author_name'], 'string', 'min' => 2, 'max' => 15],
             [['email'], 'email'],
@@ -76,44 +76,6 @@ class Story extends ActiveRecord
             'deleted_ip' => 'Deleted Ip',
             'manage_token' => 'Manage Token',
         ];
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function softDelete(?string $ip): bool
-    {
-        $this->deleted_at = time();
-        $this->deleted_ip = $ip;
-        return $this->save(false, ['deleted_at', 'deleted_ip']);
-    }
-
-    public static function findActive(): ActiveQuery
-    {
-        return static::find()
-            ->where([
-                'deleted_at' => null
-            ]);
-    }
-
-    public static function findActiveById(int $id): ?self
-    {
-        return static::find()
-            ->where([
-                'id' => $id,
-                'deleted_at' => null
-            ])
-            ->one();
-    }
-
-    public static function countByIp(string $ip): int
-    {
-        return (int)static::find()
-            ->where([
-                'ip' => $ip,
-                'deleted_at' => null
-            ])
-            ->count();
     }
 
 }
